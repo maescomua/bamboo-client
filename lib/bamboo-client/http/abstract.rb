@@ -29,7 +29,10 @@ module Bamboo
         end
 
         def query_string_for(params)
-          params.map { |k, v| "#{k.to_s}=#{CGI.escape(v.to_s)}" }.join('&')
+          params.map { |k, v|
+            value = v.is_a?(Array) ? v.join(',') : v.to_s
+            "#{k.to_s}=#{CGI.escape(value)}"
+          }.join('&')
         end
 
       end # Abstract

@@ -29,32 +29,32 @@ module Bamboo
         @cookies = {:JSESSIONID => resp['JSESSIONID']}
       end
 
-      def plans
-        get("plan/").auto_expand Plan, @http
+      def plans(params = nil)
+        get("plan/", params).auto_expand Plan, @http
       end
 
-      def projects
-        get("project/").auto_expand Project, @http
+      def projects(params = nil)
+        get("project/", params).auto_expand Project, @http
       end
 
-      def project_for(key)
-        Project.new get("project/#{URI.escape key}").data, @http
+      def project_for(key,params = nil)
+        Project.new get("project/#{URI.escape key}", params).data, @http
       end
 
-      def results
-        get("result/").auto_expand Result, @http
+      def results(params = nil)
+        get("result/", params).auto_expand Result, @http
       end
 
-      def results_for(key)
-        get("result/#{URI.escape key}").auto_expand Result, @http
+      def results_for(key, params = nil)
+        get("result/#{URI.escape key}", params).auto_expand Result, @http
       end
 
-      def plan_for(key)
-        Plan.new get("plan/#{URI.escape key}").data, @http
+      def plan_for(key, params = nil)
+        Plan.new get("plan/#{URI.escape key}", params).data, @http
       end
 
-      def queue
-        Queue.new get("queue/").data, @http
+      def queue(params = nil)
+        Queue.new get("queue/", params).data, @http
       end
 
       private
@@ -64,6 +64,9 @@ module Bamboo
       end
 
       class Plan
+
+        attr_reader :data
+        
         def initialize(data, http)
           @data = data
           @http = http
@@ -111,6 +114,9 @@ module Bamboo
       end # Plan
 
       class Project
+
+        attr_reader :data
+        
         def initialize(data, http)
           @data = data
           @http = http
@@ -140,11 +146,14 @@ module Bamboo
       end # Project
 
       class Result
+
+        attr_reader :data
+        
         def initialize(data, http)
           @data = data
           @http = http
-
           @changes = nil
+          @details = nil
         end
 
         def state
@@ -210,23 +219,27 @@ module Bamboo
 
         def changes
           @changes ||= (
-            doc = fetch_details("changes.change.files").doc_for('changes')
+            doc = details("changes.change.files").doc_for('changes')
             doc.auto_expand Change, @http
           )
         end
 
-        private
-
-        def details
-          @details ||= @http.get(uri).data
+        def details(expand = nil)
+          if @expand == expand
+            @details ||= @http.get(uri, :expand => expand).data
+          else
+            @details = @http.get(uri, :expand => expand).data
+            @expand = expand
+          end
+          @details
         end
 
-        def fetch_details(expand)
-          @http.get(uri, :expand => expand)
-        end
       end # Result
 
       class Change
+
+        attr_reader :data
+        
         def initialize(data, http)
           @data = data
           @http = http
@@ -274,6 +287,9 @@ module Bamboo
       end # Change
 
       class Queue
+
+        attr_reader :data
+        
         def initialize(data, http)
           @data = data
           @http = http
@@ -304,6 +320,9 @@ module Bamboo
       end # Queue
 
       class QueuedBuild
+
+        attr_reader :data
+        
         def initialize(data, http)
           @data = data
           @http = http
